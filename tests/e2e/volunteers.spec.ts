@@ -111,9 +111,12 @@ test("aligns the header and project cards and exposes the registration link", as
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }
   for (const card of await cards.all()) {
-    const status = (await card.locator(".badge").boundingBox())!;
-    const title = (await card.getByRole("heading").boundingBox())!;
-    expect(status.y + status.height).toBeLessThanOrEqual(title.y);
+    const statusBeforeTitle = await card.evaluate((element) => {
+      const status = element.querySelector(".badge")!.getBoundingClientRect();
+      const title = element.querySelector("h3")!.getBoundingClientRect();
+      return status.bottom <= title.top;
+    });
+    expect(statusBeforeTitle).toBe(true);
   }
   await theme.click();
   const registration = page.getByRole("link", { name: "Quero me cadastrar como voluntário" });
