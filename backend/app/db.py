@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import Session
 
+
 def database_url() -> str | URL:
     url = os.getenv("DATABASE_URL")
     if url:
