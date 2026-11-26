@@ -849,3 +849,36 @@ body.modal-aberto {
     transition: none !important;
   }
 }
+
+.info-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  max-width: min(560px, calc(100% - 2rem));
+}
+
+.info-dialog::backdrop {
+  background: rgb(0 0 0 / 65%);
+}
+
+.rodape-pagina a {
+  color: inherit;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-block: 1rem;
+}
+
+.admin-records {
+  padding-inline-start: 1.25rem;
+}
+
+.admin-records li {
+  margin-block: 0.5rem;
+  overflow-wrap: anywhere;
+}
