@@ -95,3 +95,32 @@ test("registers, reloads, edits and deletes a volunteer through the UI", async (
     await cleanupPreviousRun();
   }
 });
+
+test("aligns the header and project cards and exposes the registration link", async ({ page }) => {
+  await page.goto("/#/projetos");
+  const cards = page.getByRole("article");
+  await expect(cards).toHaveCount(3);
+  const theme = page.getByRole("button", { name: "Modo escuro" });
+  for (const width of [320, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const content = (await page.getByRole("main").boundingBox())!;
+    const brand = (await page.getByRole("heading", { level: 1 }).boundingBox())!;
+    const themeBox = (await theme.boundingBox())!;
+    expect(brand.x).toBeGreaterThan(content.x);
+    expect(themeBox.x + themeBox.width).toBeLessThanOrEqual(content.x + content.width + 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  }
+  for (const card of await cards.all()) {
+    const statusBeforeTitle = await card.evaluate((element) => {
+      const status = element.querySelector(".badge")!.getBoundingClientRect();
+      const title = element.querySelector("h3")!.getBoundingClientRect();
+      return status.bottom <= title.top;
+    });
+    expect(statusBeforeTitle).toBe(true);
+  }
+  await theme.click();
+  const registration = page.getByRole("link", { name: "Quero me cadastrar como voluntário" });
+  await expect(registration).toHaveCSS("color", "rgb(255, 255, 255)");
+  await registration.click();
+  await expect(page.getByRole("heading", { name: "Formulário de Cadastro" })).toBeVisible();
+});
