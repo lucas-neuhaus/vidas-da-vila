@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-vidas}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD no .env}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-15432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -18,7 +18,10 @@ services:
   api:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-vidas}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-vidas_dev}
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${POSTGRES_USER:-vidas}
+      POSTGRES_DB: ${POSTGRES_DB:-vidas_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD no .env}
       ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?Configure ADMIN_API_TOKEN no .env}
     command: ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
     depends_on:
@@ -38,7 +41,7 @@ services:
       api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:${WEB_HOST_PORT:-8080}:80"
 
 volumes:
   postgres-data:

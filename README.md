@@ -26,11 +26,10 @@ Pré-requisitos: Git, Docker e Docker Compose v2. Os exemplos de terminal usam B
 ```bash
 git clone https://github.com/lucas-neuhaus/vidas-da-vila.git
 cd vidas-da-vila
-git switch feature/full-stack-modernization
 cp .env.example .env
 ```
 
-Edite `.env`. Escolha uma senha local com caracteres seguros para URL, como letras, números, hífen e sublinhado. Gere um token aleatório com `python -c "import secrets; print(secrets.token_urlsafe(32))"` e atribua o resultado a `ADMIN_API_TOKEN`.
+Edite `.env`. Escolha uma senha local para o banco. Gere um token aleatório com `python -c "import secrets; print(secrets.token_urlsafe(32))"` e atribua o resultado a `ADMIN_API_TOKEN`.
 
 ```bash
 docker compose up --build -d
@@ -40,6 +39,8 @@ curl -f http://localhost:8080/api/health
 
 Acesse <http://localhost:8080>. A documentação interativa está em <http://localhost:8080/api/docs>. Use o token configurado na página **Área administrativa**, disponível no rodapé. O Compose aplica as migrations na inicialização da API. O volume nomeado mantém os dados entre reinicializações. Para encerrar, execute `docker compose down`.
 
+Se o Docker informar que a porta do banco ou do site está ocupada, altere `POSTGRES_HOST_PORT` ou `WEB_HOST_PORT` em `.env` e rode `docker compose up -d` novamente. A API continua usando a porta interna do PostgreSQL.
+
 ### Variáveis de ambiente
 
 | Variável | Uso |
@@ -47,6 +48,8 @@ Acesse <http://localhost:8080>. A documentação interativa está em <http://loc
 | `POSTGRES_USER` | Usuário do banco no Compose. Padrão `vidas`. |
 | `POSTGRES_DB` | Nome do banco no Compose. Padrão `vidas_dev`. |
 | `POSTGRES_PASSWORD` | Senha do banco no Compose. |
+| `POSTGRES_HOST_PORT` | Porta local para acesso ao PostgreSQL pelo Windows ou pgAdmin. Padrão `15432`. |
+| `WEB_HOST_PORT` | Porta local do site. Padrão `8080`. |
 | `DATABASE_URL` | URL SQLAlchemy da API, no formato `postgresql+psycopg://usuario:senha@host:porta/banco`. O Compose monta a sua própria URL interna. |
 | `ADMIN_API_TOKEN` | Credencial Bearer com pelo menos 32 caracteres ASCII. |
 | `API_PROXY_TARGET` | Destino opcional do proxy Vite. Padrão `http://127.0.0.1:8000`. |
@@ -58,7 +61,7 @@ docker compose exec api python -m app.seed_demo
 docker compose exec api alembic current
 ```
 
-A carga demonstrativa insere um cadastro fictício apenas em um banco com sufixo `_dev` e pode ser repetida. No pgAdmin, conecte a `127.0.0.1:5432` com as credenciais locais e selecione `vidas_dev` (ou o nome configurado). Abra a Query Tool e execute:
+A carga demonstrativa insere um cadastro fictício apenas em um banco com sufixo `_dev` e pode ser repetida. No pgAdmin, conecte a `127.0.0.1:15432` (ou a porta definida em `POSTGRES_HOST_PORT`) com as credenciais locais e selecione `vidas_dev` (ou o nome configurado). Abra a Query Tool e execute:
 
 ```sql
 SELECT version_num FROM alembic_version;
