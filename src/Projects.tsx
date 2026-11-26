@@ -45,8 +45,8 @@ function ProjectList() {
     {projects.map((project) => (
       <article key={project.slug} className="col-md-6 col-lg-4">
         <div className="cabecalho-card">
-          <h3>{project.title}</h3>
           <span className={`badge ${badges[project.status] ?? "badge-info"}`}>{project.label}</span>
+          <h3>{project.title}</h3>
         </div>
         <p>{project.description}</p>
       </article>
@@ -78,7 +78,7 @@ export function Projects() {
       </ul>
 
       <p>
-        <a href="#/cadastro">Quero me cadastrar como voluntário</a>
+        <a className="acao-voluntariado" href="#/cadastro">Quero me cadastrar como voluntário</a>
       </p>
     </section>
 

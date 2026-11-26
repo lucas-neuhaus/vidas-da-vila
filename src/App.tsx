@@ -35,35 +35,37 @@ function Header({ route }: { route: string }) {
     <header onKeyDown={(event) => {
       if (event.key === "Escape" && open) { setOpen(false); menuButton.current?.focus(); }
     }}>
-      <div className="cabecalho-marca">
-        <a href="#/home" className="link-logo" aria-label="Instituto Vidas da Vila Aparecida — página inicial">
-          <img src={logo} alt="" width="320" height="168" />
-        </a>
-        <h1>Instituto Vidas da Vila Aparecida</h1>
+      <div className="cabecalho-conteudo">
+        <div className="cabecalho-marca">
+          <a href="#/home" className="link-logo" aria-label="Instituto Vidas da Vila Aparecida — página inicial">
+            <img src={logo} alt="" width="320" height="168" />
+          </a>
+          <h1>Instituto Vidas da Vila Aparecida</h1>
+        </div>
+        <button type="button" ref={menuButton} className="menu-toggle" aria-expanded={open}
+          aria-controls="menu-principal" onClick={() => setOpen(!open)}>
+          <span className="menu-toggle-icone" aria-hidden="true">{open ? "×" : "☰"}</span>
+          <span>Menu</span>
+        </button>
+        <button type="button" className="tema-toggle" aria-pressed={dark} onClick={() => setDark(!dark)}>
+          <span className="tema-toggle-icone" aria-hidden="true">{dark ? "☀️" : "🌙"}</span>
+          <span>{dark ? "Modo claro" : "Modo escuro"}</span>
+        </button>
+        <nav className="nav-principal" aria-label="Navegação principal" onClick={closeOnLink}>
+          <ul id="menu-principal" className={`menu-principal ${open ? "is-open" : ""}`}>
+            {links.map(([path, label]) => (
+              <li key={path} className={path === "/projetos" ? "menu-item-com-submenu" : undefined}>
+                <a href={`#${path}`} aria-current={route === path ? "page" : undefined}>{label}</a>
+                {path === "/projetos" && <ul className="submenu">
+                  <li><a href="#/projetos">Projetos ativos</a></li>
+                  <li><a href="#/projetos/voluntariado">Voluntariado</a></li>
+                  <li><a href="#/projetos/doacao">Como doar</a></li>
+                </ul>}
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
-      <button type="button" ref={menuButton} className="menu-toggle" aria-expanded={open}
-        aria-controls="menu-principal" onClick={() => setOpen(!open)}>
-        <span className="menu-toggle-icone" aria-hidden="true">{open ? "×" : "☰"}</span>
-        <span>Menu</span>
-      </button>
-      <nav className="nav-principal" aria-label="Navegação principal" onClick={closeOnLink}>
-        <ul id="menu-principal" className={`menu-principal ${open ? "is-open" : ""}`}>
-          {links.map(([path, label]) => (
-            <li key={path} className={path === "/projetos" ? "menu-item-com-submenu" : undefined}>
-              <a href={`#${path}`} aria-current={route === path ? "page" : undefined}>{label}</a>
-              {path === "/projetos" && <ul className="submenu">
-                <li><a href="#/projetos">Projetos ativos</a></li>
-                <li><a href="#/projetos/voluntariado">Voluntariado</a></li>
-                <li><a href="#/projetos/doacao">Como doar</a></li>
-              </ul>}
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <button type="button" className="tema-toggle" aria-pressed={dark} onClick={() => setDark(!dark)}>
-        <span className="tema-toggle-icone" aria-hidden="true">{dark ? "☀️" : "🌙"}</span>
-        <span>{dark ? "Modo claro" : "Modo escuro"}</span>
-      </button>
     </header>
   );
 }

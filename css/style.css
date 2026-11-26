@@ -166,14 +166,15 @@ textarea:focus-visible {
 header {
   background-color: var(--cor-primaria-escura);
   color: var(--cor-texto-inverso);
-  padding: var(--espaco-6) var(--espaco-4);
+  padding-block: var(--espaco-6);
 }
 
 .cabecalho-marca {
   display: flex;
   align-items: center;
   gap: var(--espaco-3);
-  margin-bottom: var(--espaco-4);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .link-logo {
@@ -229,7 +230,7 @@ header h1 {
 }
 
 /* Organização do cabeçalho em dispositivos móveis */
-header {
+.cabecalho-conteudo {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -315,9 +316,13 @@ header {
 }
 
 /* ---------- Conteúdo / Grid de 12 colunas ---------- */
+.cabecalho-conteudo,
 main {
   width: min(100% - 2rem, 72rem);
   margin-inline: auto;
+}
+
+main {
   padding-block: var(--espaco-8);
 }
 
@@ -542,11 +547,30 @@ dd {
 }
 
 /* ---------- Badges ---------- */
+main a.acao-voluntariado,
+[data-tema="escuro"] main a.acao-voluntariado {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: var(--espaco-2) var(--espaco-4);
+  border-radius: 0.5rem;
+  background: #1f6b45;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+main a.acao-voluntariado:hover,
+[data-tema="escuro"] main a.acao-voluntariado:hover {
+  background: #155236;
+  color: #fff;
+  text-decoration: underline;
+}
+
 .cabecalho-card {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--espaco-2);
   margin-bottom: var(--espaco-3);
 }
@@ -727,6 +751,7 @@ body.modal-aberto {
 
 /* Celulares maiores */
 @media (min-width: 480px) {
+  .cabecalho-conteudo,
   main {
     width: min(100% - 3rem, 72rem);
   }
@@ -738,17 +763,18 @@ body.modal-aberto {
 
 /* Tablets */
 @media (min-width: 768px) {
-  header {
-    display: block;
-    position: relative;
-    padding-inline: var(--espaco-8);
+  .cabecalho-conteudo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .tema-toggle {
-    position: absolute;
-    top: var(--espaco-6);
-    right: var(--espaco-8);
-    margin-left: 0;
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .nav-principal {
+    grid-column: 1 / -1;
   }
 
   .menu-toggle {
@@ -824,6 +850,7 @@ body.modal-aberto {
 
 /* Desktops */
 @media (min-width: 1280px) {
+  .cabecalho-conteudo,
   main {
     width: min(100% - 4rem, 76rem);
   }
@@ -835,6 +862,7 @@ body.modal-aberto {
 
 /* Telas panorâmicas */
 @media (min-width: 1536px) {
+  .cabecalho-conteudo,
   main {
     width: min(100% - 6rem, 82rem);
   }
