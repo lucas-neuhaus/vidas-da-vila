@@ -60,3 +60,27 @@ jobs:
           trap 'kill "$api_pid"; cat /tmp/vidas-api.log' EXIT
           curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/api/health
           npm run test:e2e
+
+  compose:
+    name: Validar a execução com Docker Compose
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_DB: vidas_compose_test
+      POSTGRES_PASSWORD: ci-only@compose:password
+      POSTGRES_HOST_PORT: "25432"
+      WEB_HOST_PORT: "18080"
+      ADMIN_API_TOKEN: test-token-for-ephemeral-compose-only
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up --build --wait --wait-timeout 120
+      - name: Conferir site, catálogo e proteção do histórico
+        run: |
+          curl --fail --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:18080/ | grep -F 'Instituto Vidas'
+          curl --fail http://127.0.0.1:18080/api/health | jq -e '.status == "ok"'
+          curl --fail http://127.0.0.1:18080/api/projects | jq -e 'length == 3'
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/api/admin/volunteers)" = 401
+          curl --fail --header "Authorization: Bearer $ADMIN_API_TOKEN" http://127.0.0.1:18080/api/admin/volunteers | jq -e '. == []'
+      - if: always()
+        run: docker compose logs --no-color
+      - if: always()
+        run: docker compose down -v

@@ -7,7 +7,12 @@ test("navigates the mobile site and closes the donation dialog with Escape", asy
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Quem nós somos" })).toBeVisible();
-  await page.getByRole("button", { name: "Menu" }).click();
+  const menu = page.getByRole("button", { name: "Menu" });
+  await expect(page.getByRole("link", { name: "Projetos", exact: true })).toBeHidden();
+  await menu.focus();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Modo escuro" })).toBeFocused();
+  await menu.click();
   await page.getByRole("link", { name: "Projetos", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Cestas Solidárias" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -64,7 +69,20 @@ test("registers, reloads, edits and deletes a volunteer through the UI", async (
     await page.getByRole("button", { name: "Pessoa Teste Navegador" }).click();
     await expect(form.getByLabel("Cidade")).toHaveValue("Florianópolis");
     await form.getByLabel("Cidade").fill("São José");
-    await form.getByRole("button", { name: "Salvar alterações" }).click();
+    let allowSave = () => {};
+    const saveGate = new Promise<void>((resolve) => { allowSave = resolve; });
+    await page.route("**/api/admin/volunteers/*", async (route) => {
+      if (route.request().method() === "PUT") await saveGate;
+      await route.continue();
+    });
+    try {
+      await form.getByRole("button", { name: "Salvar alterações" }).click();
+      await expect(page.getByRole("button", { name: "Sair" })).toBeDisabled();
+      await expect(page.getByRole("button", { name: "Voltar à lista" })).toBeDisabled();
+      await expect(page.getByRole("button", { name: "Excluir cadastro" })).toBeDisabled();
+    } finally {
+      allowSave();
+    }
     await expect(page.getByText("Cadastro atualizado.")).toBeVisible();
     await page.getByRole("button", { name: "Voltar à lista" }).click();
     await page.getByRole("button", { name: "Pessoa Teste Navegador" }).click();

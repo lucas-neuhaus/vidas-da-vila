@@ -23,6 +23,7 @@ export function Admin() {
     setSelected(null);
     setOffset(0);
     setNotice("");
+    setError("");
   }
 
   function report(reason: unknown) {
@@ -54,6 +55,9 @@ export function Admin() {
 
   async function save(volunteer: Volunteer) {
     if (!selected) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
     try {
       const updated = await api<Detail>(`${path}/${selected.id}`, {
         method: "PUT", body: JSON.stringify(volunteer),
@@ -64,6 +68,8 @@ export function Admin() {
     } catch (reason) {
       if (reason instanceof ApiError && reason.status === 401) report(reason);
       throw reason;
+    } finally {
+      setBusy(false);
     }
   }
 
