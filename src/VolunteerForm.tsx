@@ -36,6 +36,12 @@ const groups: { title: string; fields: InputField[] }[] = [
   ] },
 ];
 
+const fieldLabels = new Map<string, string>([
+  ...groups.flatMap(({ fields }) => fields.map(({ name, label }) => [name, label] as const)),
+  ["estado", "Estado"],
+  ["mensagem", "Motivação"],
+]);
+
 function digits(value: string, length: number) {
   return value.replace(/\D/g, "").slice(0, length);
 }
@@ -95,7 +101,9 @@ export function VolunteerForm({ initial, action, onSave }: {
   useLayoutEffect(() => {
     if (busy || !focusField.current) return;
     focusField.current = false;
-    formRef.current?.querySelector<Control>('[aria-invalid="true"]')?.focus();
+    const firstInvalid = formRef.current?.querySelector<Control>('[aria-invalid="true"]');
+    firstInvalid?.focus({ preventScroll: true });
+    firstInvalid?.closest(".campo-formulario")?.scrollIntoView({ block: "center", behavior: "instant" });
   }, [busy, fields]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -148,8 +156,28 @@ export function VolunteerForm({ initial, action, onSave }: {
     return fields[name] && <p className="erro-cadastro" id={`${name}-erro`}>{fields[name]}</p>;
   }
 
+  const invalidFields = Object.entries(fields).filter(([, message]) => message);
+
   return <form ref={formRef} noValidate onSubmit={submit} aria-busy={busy}>
-    {error && <p className="alerta alerta-erro" role="alert">{error}</p>}
+    {invalidFields.length > 0 ? (
+      <div className="alerta alerta-erro resumo-erros" role="alert">
+        <p><strong>Corrija os campos abaixo para continuar.</strong></p>
+        <ul>
+          {invalidFields.map(([name, message]) => (
+            <li key={name}>
+              <a href={`#${name}`} onClick={(event) => {
+                event.preventDefault();
+                const field = formRef.current?.elements.namedItem(name);
+                if (field instanceof HTMLElement) {
+                  field.focus({ preventScroll: true });
+                  field.closest(".campo-formulario")?.scrollIntoView({ block: "center", behavior: "instant" });
+                }
+              }}>{fieldLabels.get(name)}: {message}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : error && <p className="alerta alerta-erro" role="alert">{error}</p>}
     {groups.map(({ title, fields: inputs }) => (
       <fieldset key={title} disabled={busy}>
         <legend>{title}</legend>

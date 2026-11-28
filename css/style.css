@@ -420,8 +420,23 @@ legend {
   }
 }
 
+.resumo-erros p,
+.resumo-erros ul {
+  margin-block: 0;
+}
+
+main .resumo-erros a,
+[data-tema="escuro"] main .resumo-erros a {
+  color: var(--cor-erro);
+  overflow-wrap: anywhere;
+}
+
 .erro-cadastro {
   margin: 0;
+  padding: var(--espaco-1) var(--espaco-2);
+  border-inline-start: 3px solid var(--cor-erro);
+  border-radius: 0.25rem;
+  background: var(--cor-fundo-erro);
   color: var(--cor-erro);
   font-size: var(--fonte-sm);
   font-weight: 600;

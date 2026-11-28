@@ -83,6 +83,13 @@ for (const width of [320, 1440]) {
     await page.keyboard.press("Enter");
     await expect(birth).toBeFocused();
     await expect(birth).toHaveAccessibleDescription("Preencha este campo.");
+    await expect(form.locator("#data_nascimento-erro")).toBeVisible();
+    await expect(form.locator("#data_nascimento-erro")).toBeInViewport();
+    const summary = form.getByRole("alert");
+    await expect(summary.getByRole("link", { name: "CPF: Preencha este campo." })).toBeVisible();
+    await summary.getByRole("link", { name: "CPF: Preencha este campo." }).click();
+    await expect(cpf).toBeFocused();
+    await expect(form.locator("#cpf-erro")).toBeInViewport();
     await expect(cpf).toHaveAttribute("aria-invalid", "true");
     await expect(name).toHaveValue("Pessoa Teste");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
@@ -129,6 +136,8 @@ test("registers, reloads, edits and deletes a volunteer through the UI", async (
     await expect(name).toBeFocused();
     await expect(name).toHaveAccessibleDescription("Informe seu nome completo.");
     await expect(cpf).toHaveAccessibleDescription("Informe um CPF válido.");
+    await expect(form.locator("#nome-erro")).toBeInViewport();
+    await expect(form.getByRole("alert").getByRole("link", { name: "CPF: Informe um CPF válido." })).toBeVisible();
     await expect(form.getByLabel("Cidade")).toHaveValue("Florianópolis");
     await name.fill("Pessoa Teste Navegador");
     await cpf.fill(testCpf);
