@@ -57,6 +57,45 @@ test("navigates the mobile site and closes the donation dialog with Escape", asy
   await expect(trigger).toBeFocused();
 });
 
+for (const width of [320, 1440]) {
+  test(`validates registration with the keyboard at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/#/cadastro");
+    const form = page.locator("form");
+    for (const name of ["Identificação", "Contato", "Endereço", "Motivação"]) {
+      await expect(form.getByRole("group", { name })).toBeVisible();
+    }
+    const name = form.getByLabel("Nome completo");
+    const birth = form.getByLabel("Data de nascimento");
+    const cpf = form.getByLabel("CPF");
+    const [nameBox, birthBox] = await form.getByRole("group", { name: "Identificação" })
+      .locator("input").evaluateAll((inputs) => inputs.map((input) => input.getBoundingClientRect().toJSON()));
+    if (width === 320) {
+      expect(birthBox.y).toBeGreaterThan(nameBox.y + nameBox.height);
+    } else {
+      expect(birthBox.x).toBeGreaterThan(nameBox.x + nameBox.width);
+    }
+    await name.focus();
+    await page.keyboard.type("Pessoa Teste");
+    await page.keyboard.press("Tab");
+    await expect(birth).toBeFocused();
+    await form.getByRole("button", { name: "Cadastrar" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(birth).toBeFocused();
+    await expect(birth).toHaveAccessibleDescription("Preencha este campo.");
+    await expect(form.locator("#data_nascimento-erro")).toBeVisible();
+    await expect(form.locator("#data_nascimento-erro")).toBeInViewport();
+    const summary = form.getByRole("alert");
+    await expect(summary.getByRole("link", { name: "CPF: Preencha este campo." })).toBeVisible();
+    await summary.getByRole("link", { name: "CPF: Preencha este campo." }).click();
+    await expect(cpf).toBeFocused();
+    await expect(form.locator("#cpf-erro")).toBeInViewport();
+    await expect(cpf).toHaveAttribute("aria-invalid", "true");
+    await expect(name).toHaveValue("Pessoa Teste");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  });
+}
+
 test("registers, reloads, edits and deletes a volunteer through the UI", async ({ page, request }) => {
   if (!token || !process.env.DATABASE_URL?.split("?")[0].endsWith("_test")) {
     throw new Error("Configure ADMIN_API_TOKEN e um banco dedicado com nome terminado em _test.");
@@ -78,18 +117,39 @@ test("registers, reloads, edits and deletes a volunteer through the UI", async (
   try {
     await page.goto("/#/cadastro");
     const form = page.locator("form");
-    await form.getByLabel("Nome completo").fill("Pessoa Teste Navegador");
+    const name = form.getByLabel("Nome completo");
+    const cpf = form.getByLabel("CPF");
+    await name.fill("Pessoa");
     await form.getByLabel("Email").fill("navegador@example.org");
     await form.getByLabel("Data de nascimento").fill("1990-03-15");
-    await form.getByLabel("CPF").fill(testCpf);
+    await cpf.fill("11111111111");
     await form.getByLabel("Telefone").fill("48912345678");
     await form.getByLabel("CEP").fill("88000000");
     await form.getByLabel("Endereço (rua e número)").fill("Rua de Exemplo, 42");
     await form.getByLabel("Cidade").fill("Florianópolis");
     await form.getByLabel("Estado").selectOption("SC");
     await form.getByLabel("Por que quer ser voluntário?").fill("Gostaria de apoiar as atividades da comunidade.");
+    const validation = page.waitForResponse((response) =>
+      response.url().endsWith("/api/volunteers") && response.status() === 422);
     await form.getByRole("button", { name: "Cadastrar" }).click();
-    await expect(page.getByText("Solicitação de cadastro recebida.")).toBeVisible();
+    await validation;
+    await expect(name).toBeFocused();
+    await expect(name).toHaveAccessibleDescription("Informe seu nome completo.");
+    await expect(cpf).toHaveAccessibleDescription("Informe um CPF válido.");
+    await expect(form.locator("#nome-erro")).toBeInViewport();
+    await expect(form.getByRole("alert").getByRole("link", { name: "CPF: Informe um CPF válido." })).toBeVisible();
+    await expect(form.getByLabel("Cidade")).toHaveValue("Florianópolis");
+    await name.fill("Pessoa Teste Navegador");
+    await cpf.fill(testCpf);
+    await expect(cpf).toHaveAttribute("aria-invalid", "false");
+    await form.getByRole("button", { name: "Cadastrar" }).click();
+    await expect(page.getByRole("heading", { name: "Solicitação de cadastro recebida." })).toBeFocused();
+    await expect(page.getByText(/A equipe do Instituto avalia os cadastros/)).toBeVisible();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("button", { name: "Iniciar outro cadastro" })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { name: "Formulário de Cadastro" })).toBeFocused();
+    await expect(name).toHaveValue("");
     await page.reload();
     await expect(page.getByText(/Voluntários cadastrados:/)).toBeVisible();
 
