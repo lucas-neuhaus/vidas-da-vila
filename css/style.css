@@ -408,6 +408,25 @@ legend {
   gap: var(--espaco-1);
 }
 
+.campos-cadastro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--espaco-4);
+}
+
+@media (min-width: 768px) {
+  .campos-cadastro {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.erro-cadastro {
+  margin: 0;
+  color: var(--cor-erro);
+  font-size: var(--fonte-sm);
+  font-weight: 600;
+}
+
 label {
   font-weight: 700;
 }

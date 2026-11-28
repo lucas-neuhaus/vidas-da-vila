@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type InputHTMLAttributes } from "react";
+import { useLayoutEffect, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { ApiError } from "./api";
 import { states } from "./states";
 
@@ -15,15 +15,15 @@ type InputField = InputHTMLAttributes<HTMLInputElement> & {
 };
 
 const groups: { title: string; fields: InputField[] }[] = [
-  { title: "Dados pessoais", fields: [
+  { title: "Identificação", fields: [
     { name: "nome", label: "Nome completo", autoComplete: "name", minLength: 5, maxLength: 120 },
-    { name: "email", label: "Email", type: "email", autoComplete: "email", maxLength: 254 },
     { name: "data_nascimento", label: "Data de nascimento", type: "date", autoComplete: "bday",
       min: "1900-01-01" },
-  ] },
-  { title: "Documento e contato", fields: [
     { name: "cpf", label: "CPF", inputMode: "numeric", pattern: "[0-9]{3}\\.[0-9]{3}\\.[0-9]{3}-[0-9]{2}",
       placeholder: "000.000.000-00" },
+  ] },
+  { title: "Contato", fields: [
+    { name: "email", label: "Email", type: "email", autoComplete: "email", maxLength: 254 },
     { name: "telefone", label: "Telefone", type: "tel", inputMode: "numeric", autoComplete: "tel",
       pattern: "\\([0-9]{2}\\) [0-9]{4,5}-[0-9]{4}", placeholder: "(00) 00000-0000" },
   ] },
@@ -48,6 +48,36 @@ const masks: Partial<Record<Field, (value: string) => string>> = {
   cep: (value) => digits(value, 8).replace(/^(\d{5})(\d)/, "$1-$2"),
 };
 
+const formatErrors: Partial<Record<Field, string>> = {
+  cpf: "Informe os 11 dígitos do CPF.",
+  telefone: "Informe o DDD e o telefone com 8 ou 9 dígitos.",
+  cep: "Informe os 8 dígitos do CEP.",
+};
+
+type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+function validationMessage(control: Control) {
+  const { validity, name } = control;
+  if (validity.valueMissing) return name === "estado" ? "Selecione um estado." : "Preencha este campo.";
+  if (validity.badInput || validity.rangeUnderflow || validity.rangeOverflow) {
+    return "Informe uma data de nascimento válida.";
+  }
+  if (validity.typeMismatch) return "Informe um email válido.";
+  if (validity.patternMismatch) return formatErrors[name as Field] ?? "Verifique o formato deste campo.";
+  if ("minLength" in control && control.minLength > 0 && control.value.trim().length < control.minLength) {
+    return `Informe pelo menos ${control.minLength} caracteres.`;
+  }
+  return validity.valid ? "" : control.validationMessage;
+}
+
+function apiFieldMessage(name: string, message: string) {
+  if (message.startsWith("Value error, ")) return message.slice("Value error, ".length);
+  if (name === "email") return "Informe um email válido.";
+  const length = message.match(/^String should have at (least|most) (\d+) characters/);
+  if (length) return `Informe ${length[1] === "least" ? "pelo menos" : "no máximo"} ${length[2]} caracteres.`;
+  return "Verifique o valor deste campo.";
+}
+
 export function VolunteerForm({ initial, action, onSave }: {
   initial?: Volunteer;
   action: string;
@@ -56,25 +86,44 @@ export function VolunteerForm({ initial, action, onSave }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [fields, setFields] = useState<Record<string, string>>({});
+  const formRef = useRef<HTMLFormElement>(null);
+  const focusField = useRef(false);
   const today = new Date();
   const maxDate = [today.getFullYear(), today.getMonth() + 1, today.getDate()]
     .map((part) => String(part).padStart(2, "0")).join("-");
+
+  useLayoutEffect(() => {
+    if (busy || !focusField.current) return;
+    focusField.current = false;
+    formRef.current?.querySelector<Control>('[aria-invalid="true"]')?.focus();
+  }, [busy, fields]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     if (busy) return;
-    const data = Object.fromEntries(new FormData(form)) as Volunteer;
-    setBusy(true);
     setError("");
+    const controls = Array.from(form.querySelectorAll<Control>("input, select, textarea"));
+    const invalid = Object.fromEntries(controls.map((control) => [control.name, validationMessage(control)])
+      .filter(([, message]) => message));
+    if (Object.keys(invalid).length) {
+      focusField.current = true;
+      setFields(invalid);
+      return;
+    }
+    const data = Object.fromEntries(new FormData(form)) as Volunteer;
     setFields({});
+    setBusy(true);
     try {
       await onSave(data);
       if (!initial) form.reset();
     } catch (reason) {
       setError(reason instanceof ApiError ? reason.message : "Falha na conexão. Tente novamente.");
       if (reason instanceof ApiError) {
-        setFields(reason.fields);
+        const errors = Object.fromEntries(controls.filter(({ name }) => Object.hasOwn(reason.fields, name))
+          .map(({ name }) => [name, apiFieldMessage(name, reason.fields[name])]));
+        focusField.current = Object.keys(errors).length > 0;
+        setFields(errors);
       }
     } finally {
       setBusy(false);
@@ -88,48 +137,54 @@ export function VolunteerForm({ initial, action, onSave }: {
       required: true,
       "aria-invalid": !!fields[name],
       "aria-describedby": fields[name] ? `${name}-erro` : undefined,
+      onInput: () => {
+        if (!fields[name]) return;
+        setFields((current) => ({ ...current, [name]: "" }));
+      },
     };
   }
 
   function fieldError(name: Field) {
-    return fields[name] && <p id={`${name}-erro`}>{fields[name].replace(/^Value error, /, "")}</p>;
+    return fields[name] && <p className="erro-cadastro" id={`${name}-erro`}>{fields[name]}</p>;
   }
 
-  return <form onSubmit={submit} aria-busy={busy}>
+  return <form ref={formRef} noValidate onSubmit={submit} aria-busy={busy}>
     {error && <p className="alerta alerta-erro" role="alert">{error}</p>}
     {groups.map(({ title, fields: inputs }) => (
       <fieldset key={title} disabled={busy}>
         <legend>{title}</legend>
-        {inputs.map(({ name, label, ...props }) => {
-          const mask = masks[name];
-          return <div key={name} className="campo-formulario">
-            <label htmlFor={name}>{label}</label>
-            <input {...props} {...fieldProps(name)}
-              max={name === "data_nascimento" ? maxDate : undefined}
-              defaultValue={mask ? mask(initial?.[name] ?? "") : initial?.[name]}
-              onChange={mask ? (event) => {
-                const input = event.currentTarget;
-                const before = input.value;
-                const cursor = input.selectionStart ?? before.length;
-                const masked = mask(before);
-                if (before !== masked) {
-                  input.value = masked;
-                  const position = Math.max(0, cursor + masked.length - before.length);
-                  input.setSelectionRange(position, position);
-                }
-              } : undefined}
-            />
-            {fieldError(name)}
-          </div>;
-        })}
-        {title === "Endereço" && <div className="campo-formulario">
-          <label htmlFor="estado">Estado</label>
-          <select {...fieldProps("estado")} autoComplete="address-level1" defaultValue={initial?.estado ?? ""}>
-            <option value="" disabled>Selecione...</option>
-            {states.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-          </select>
-          {fieldError("estado")}
-        </div>}
+        <div className="campos-cadastro">
+          {inputs.map(({ name, label, ...props }) => {
+            const mask = masks[name];
+            return <div key={name} className="campo-formulario">
+              <label htmlFor={name}>{label}</label>
+              <input {...props} {...fieldProps(name)}
+                max={name === "data_nascimento" ? maxDate : undefined}
+                defaultValue={mask ? mask(initial?.[name] ?? "") : initial?.[name]}
+                onChange={mask ? (event) => {
+                  const input = event.currentTarget;
+                  const before = input.value;
+                  const cursor = input.selectionStart ?? before.length;
+                  const masked = mask(before);
+                  if (before !== masked) {
+                    input.value = masked;
+                    const position = Math.max(0, cursor + masked.length - before.length);
+                    input.setSelectionRange(position, position);
+                  }
+                } : undefined}
+              />
+              {fieldError(name)}
+            </div>;
+          })}
+          {title === "Endereço" && <div className="campo-formulario">
+            <label htmlFor="estado">Estado</label>
+            <select {...fieldProps("estado")} autoComplete="address-level1" defaultValue={initial?.estado ?? ""}>
+              <option value="" disabled>Selecione...</option>
+              {states.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+            </select>
+            {fieldError("estado")}
+          </div>}
+        </div>
       </fieldset>
     ))}
     <fieldset disabled={busy}>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { InformationDialog } from "./InformationDialog";
 import { VolunteerForm, type Volunteer } from "./VolunteerForm";
@@ -7,6 +7,17 @@ export function Registration() {
   const [total, setTotal] = useState<number | "error" | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [confirmation, setConfirmation] = useState("");
+  const confirmationHeading = useRef<HTMLHeadingElement>(null);
+  const formHeading = useRef<HTMLHeadingElement>(null);
+  const restarting = useRef(false);
+
+  useLayoutEffect(() => {
+    if (confirmation) confirmationHeading.current?.focus();
+    else if (restarting.current) {
+      restarting.current = false;
+      formHeading.current?.focus();
+    }
+  }, [confirmation]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -27,7 +38,7 @@ export function Registration() {
   }
 
   return <section aria-labelledby="titulo-cadastro">
-    <h2 id="titulo-cadastro">Formulário de Cadastro</h2>
+    <h2 id="titulo-cadastro" ref={formHeading} tabIndex={-1}>Formulário de Cadastro</h2>
     <div className="alerta alerta-info">
       <p><strong>Cadastro de voluntários.</strong> Preencha os campos obrigatórios.</p>
       <InformationDialog id="voluntariado-info" title="Como funciona o voluntariado?"
@@ -46,12 +57,18 @@ export function Registration() {
         }}>Tentar novamente</button></>
         : <><strong>Voluntários cadastrados:</strong> {total}</>}
     </div>
-    <VolunteerForm action="Cadastrar" onSave={register} />
-    {confirmation && <div className="toast toast-sucesso" role="status">
-      <strong>{confirmation}</strong>
-      <button className="toast-fechar" aria-label="Fechar notificação" onClick={() => setConfirmation("")}>
-        ×
+    {confirmation ? <div className="alerta alerta-sucesso">
+      <h3 ref={confirmationHeading} tabIndex={-1}>{confirmation}</h3>
+      <p>
+        A equipe do Instituto avalia os cadastros conforme as atividades disponíveis e pode usar
+        os dados informados para conversar sobre a participação. Você já concluiu esta etapa.
+      </p>
+      <button type="button" onClick={() => {
+        restarting.current = true;
+        setConfirmation("");
+      }}>
+        Iniciar outro cadastro
       </button>
-    </div>}
+    </div> : <VolunteerForm action="Cadastrar" onSave={register} />}
   </section>;
 }
