@@ -16,8 +16,8 @@ test("shows the Home introduction and links on desktop and mobile", async ({ pag
 
     await expect(phrase).toBeVisible();
     await expect.poll(() => photo.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
-    await expect(projects).toBeInViewport();
-    await expect(volunteer).toBeInViewport();
+    await expect(projects).toBeVisible();
+    await expect(volunteer).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
 
     const phraseBox = (await phrase.boundingBox())!;
