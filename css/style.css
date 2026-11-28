@@ -377,6 +377,7 @@ address p {
 
 address a {
   color: var(--cor-secundaria);
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Formulário ---------- */
@@ -546,27 +547,82 @@ dd {
   color: var(--cor-texto-secundario);
 }
 
-/* ---------- Badges ---------- */
-main a.acao-voluntariado,
-[data-tema="escuro"] main a.acao-voluntariado {
+/* ---------- Apresentação da Home ---------- */
+.apresentacao-home {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--espaco-6);
+  align-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  border-radius: 0.75rem;
+  background: var(--cor-primaria-clara);
+}
+
+.apresentacao-home h2 {
+  margin: 0;
+  font-size: var(--fonte-base);
+}
+
+.frase-instituto {
+  margin: var(--espaco-2) 0 var(--espaco-4);
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 750;
+  line-height: 1.15;
+}
+
+.apresentacao-home figure {
+  min-width: 0;
+  margin: 0;
+}
+
+.acoes-home {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-3);
+}
+
+@media (min-width: 768px) {
+  .apresentacao-home {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+main a.acao-primaria,
+main a.acao-home-secundaria {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 2.75rem;
   padding: var(--espaco-2) var(--espaco-4);
   border-radius: 0.5rem;
-  background: #1f6b45;
-  color: #fff;
   font-weight: 700;
   text-decoration: none;
 }
 
-main a.acao-voluntariado:hover,
-[data-tema="escuro"] main a.acao-voluntariado:hover {
+main a.acao-primaria,
+[data-tema="escuro"] main a.acao-primaria {
+  background: #1f6b45;
+  color: #fff;
+}
+
+main a.acao-primaria:hover,
+[data-tema="escuro"] main a.acao-primaria:hover {
   background: #155236;
   color: #fff;
   text-decoration: underline;
 }
 
+main a.acao-home-secundaria,
+[data-tema="escuro"] main a.acao-home-secundaria {
+  border: 1px solid currentColor;
+  color: var(--cor-texto);
+}
+
+main a.acao-home-secundaria:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Badges ---------- */
 .cabecalho-card {
   display: flex;
   align-items: flex-start;

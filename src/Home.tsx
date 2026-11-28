@@ -3,8 +3,21 @@ import imagemCestas from "../imagens/cestas-solidarias.avif";
 export function Home() {
   return (
     <>
-    <section aria-labelledby="titulo-quem-somos">
-      <h2 id="titulo-quem-somos">Quem nós somos</h2>
+    <section className="apresentacao-home" aria-labelledby="titulo-quem-somos">
+      <div>
+        <h2 id="titulo-quem-somos">Quem nós somos</h2>
+        <p className="frase-instituto">Educação, esporte e apoio na Vila Aparecida</p>
+        <p>
+          Há 8 anos, o Instituto Vidas da Vila Aparecida atua dentro da própria
+          comunidade, oferecendo reforço escolar, atividades esportivas e apoio
+          a famílias em situação de vulnerabilidade. Tudo o que fazemos nasce de
+          quem mora e conhece as necessidades daqui.
+        </p>
+        <div className="acoes-home">
+          <a className="acao-primaria" href="#/projetos">Conhecer os projetos</a>
+          <a className="acao-home-secundaria" href="#/cadastro">Quero ser voluntário</a>
+        </div>
+      </div>
 
       <figure>
         <img
@@ -12,7 +25,6 @@ export function Home() {
           alt="Voluntários de camiseta preta entregando cestas básicas a moradores em uma mesa ao ar livre, com a fachada pintada 'Vila Aparecida, Florianópolis - SC' ao fundo"
           width="1200"
           height="800"
-          loading="lazy"
         />
 
         <figcaption>
@@ -20,13 +32,6 @@ export function Home() {
           nosso projeto Cestas Solidárias.
         </figcaption>
       </figure>
-
-      <p>
-        Há 8 anos, o Instituto Vidas da Vila Aparecida atua dentro da própria
-        comunidade, oferecendo reforço escolar, atividades esportivas e apoio
-        a famílias em situação de vulnerabilidade. Tudo o que fazemos nasce de
-        quem mora e conhece as necessidades daqui.
-      </p>
     </section>
 
     <section aria-labelledby="titulo-missao">

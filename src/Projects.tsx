@@ -78,7 +78,7 @@ export function Projects() {
       </ul>
 
       <p>
-        <a className="acao-voluntariado" href="#/cadastro">Quero me cadastrar como voluntário</a>
+        <a className="acao-primaria" href="#/cadastro">Quero me cadastrar como voluntário</a>
       </p>
     </section>
 

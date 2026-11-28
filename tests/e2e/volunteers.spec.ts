@@ -3,6 +3,39 @@ import { expect, test } from "@playwright/test";
 const token = process.env.ADMIN_API_TOKEN;
 const testCpf = "98765432100";
 
+test("shows the Home introduction and links on desktop and mobile", async ({ page }) => {
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/#/home");
+
+    const intro = page.getByRole("region", { name: "Quem nós somos" });
+    const phrase = intro.getByText("Educação, esporte e apoio na Vila Aparecida");
+    const photo = intro.getByRole("img");
+    const projects = intro.getByRole("link", { name: "Conhecer os projetos" });
+    const volunteer = intro.getByRole("link", { name: "Quero ser voluntário" });
+
+    await expect(phrase).toBeVisible();
+    await expect.poll(() => photo.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+    await expect(projects).toBeVisible();
+    await expect(volunteer).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+
+    const phraseBox = (await phrase.boundingBox())!;
+    const photoBox = (await photo.boundingBox())!;
+    if (width === 320) {
+      expect(photoBox.y).toBeGreaterThan(phraseBox.y + phraseBox.height);
+    } else {
+      expect(photoBox.x).toBeGreaterThanOrEqual(phraseBox.x + phraseBox.width);
+    }
+
+    await projects.click();
+    await expect(page.getByRole("heading", { name: "Nossos Projetos" })).toBeVisible();
+    await page.goBack();
+    await volunteer.click();
+    await expect(page.getByRole("heading", { name: "Formulário de Cadastro" })).toBeVisible();
+  }
+});
+
 test("navigates the mobile site and closes the donation dialog with Escape", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
