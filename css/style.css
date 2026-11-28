@@ -377,6 +377,7 @@ address p {
 
 address a {
   color: var(--cor-secundaria);
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Formulário ---------- */
